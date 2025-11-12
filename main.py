@@ -4,13 +4,13 @@ import sys
 py.init()
 run = True
 
-WIDTH, HEIGHT = 1080,720
+WIDTH, HEIGHT = 750,500
 
 WIN = py.display.set_mode((WIDTH, HEIGHT))
 
 clock = py.time.Clock()
 
-sans_code = py.font.Font("SansCode.ttf", 20)
+sans_code = py.font.SysFont("Verdana", 20)
 
 WHITE = (255,255,255)
 BLACK = (0, 0, 0)
@@ -18,36 +18,57 @@ BLACK = (0, 0, 0)
 
 class Shape():
     
-    def __init__(self,fill,border,border_color):
+    def __init__(self,fill,drawn,border,border_color):
         self.fill = fill
+        self.drawn = drawn
         self.border = border
         self.border_color = border_color
 
 class Rect(Shape):
     
-    def __init__(self,x,y,width,height,fill,border=0,border_color=0):
-        super().__init__(fill,border,border_color)
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+    def __init__(self,x,y,width,height,fill,drawn,border=0,border_color=0,origin=False):
+        super().__init__(fill,drawn,border,border_color)
+        if origin: self.origin = origin
         self.rect = py.rect.Rect(x,y,width,height)
     
     def draw(self):
+
         if self.fill != None:
             py.draw.rect(WIN,self.fill,self.rect)
         
         if self.border > 0:
             py.draw.rect(WIN, self.border_color, self.rect, self.border)
+    
+    def draw_preview(self, mouse_pos = None):
+        if mouse_pos is None:
+            mouse_pos = py.mouse.get_pos()
+            if mouse_pos[0] > self.origin[0]:
+                self.rect.x = self.origin[0]
+                self.rect.width = mouse_pos[0] - self.rect.x
+            else:
+                self.rect.x = mouse_pos[0]
+                self.rect.width = self.origin[0] - mouse_pos[0]
+
+            if mouse_pos[1] > self.origin[1]:
+                self.rect.y = self.origin[1]
+                self.rect.height = mouse_pos[1] - self.rect.y
+            else:
+                self.rect.y = mouse_pos[1]
+                self.rect.height = self.origin[1] - mouse_pos[1]
+
+        else:
+            self.origin = mouse_pos
+            self.rect.topleft = mouse_pos
+            self.rect.width = 5
+            self.rect.height = 5
+
+
+
 
 class Elipse(Shape):
 
     def __init__(self,x,y,width,height,fill,border=0,border_color=0):
         super().__init__(fill,border,border_color)
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
         if width == height: self.rect = py.rect.Rect(x - width / 2, y - height / 2, width, height)
         else: self.rect = self.rect = py.rect.Rect(x,y,width,height)
     
@@ -60,13 +81,11 @@ class Elipse(Shape):
 
 class Circle(Shape):
 
-    def __init__(self,pos,radius,fill,border=0,border_color=0):
-        super().__init__(fill,border,border_color)
-        self.x = pos[0]
-        self.y = pos[1]
+    def __init__(self,pos,radius,fill,drawn=False,border=0,border_color=0):
+        super().__init__(fill,drawn,border,border_color)
         self.pos = pos
         self.radius = radius
-        self.rect = py.rect.Rect(self.x - radius, self.y - radius, radius * 2, radius * 2)
+        self.rect = py.rect.Rect(pos[0] - radius, pos[1] - radius, radius * 2, radius * 2)
     
     def draw(self):
         if self.fill != None:
@@ -95,8 +114,8 @@ class Arc(Shape):
         self.height = height
 
 class Line(Shape):
-    def __init__(self,pos1,pos2,fill,border=1):
-        super().__init__(fill,border,0)
+    def __init__(self,pos1,pos2,fill,border=1,drawn=False):
+        super().__init__(fill,drawn,border,0)
         self.pos1 = pos1
         self.pos2 = pos2
         
@@ -104,20 +123,28 @@ class Line(Shape):
         py.draw.line(WIN, self.fill, self.pos1, self.pos2, self.border)
 
 class Button():
-    def __init__(self,x,y,path,func):
+    def __init__(self,x,y,path,func,arg):
         self.img = py.image.load(path)
         self.rect = self.img.get_rect(topleft = (x,y))
         self.func = func
+        self.arg = arg
     
     def draw(self):
         WIN.blit(self.img, self.rect)
     
     def check_click(self, mouse_pos):
         if self.rect.collidepoint(mouse_pos):
-            self.func
+            waiting = True
+            while waiting:
+                for event in py.event.get():
+                    if event.type == py.MOUSEBUTTONUP:
+                        waiting = False
+            self.func(self.arg)
 
 shapes = []
 preview_shape = None
+preview = False
+preview_drawing = False
 buttons = []
 
 
@@ -129,18 +156,32 @@ background = WHITE
 
 #Brush size text
 brush_size_label_text = sans_code.render("Brush Size", True, BLACK)
-brush_size_label_rect = brush_size_label_text.get_rect(midleft = (5,660))
+brush_size_label_rect = brush_size_label_text.get_rect(midleft = (5,415))
 
 #Brush size number
 brush_size_text = sans_code.render(str(brush_size), True, BLACK)
-brush_size_rect = brush_size_text.get_rect(center = (65,690))
+brush_size_rect = brush_size_text.get_rect(center = (55,460))
 
 #Rect button
 
-def draw_rect_preview():
-    print("hi")
+def tog_shape_preview(shape):
+    global preview, preview_drawing, preview_shape, draw
+    if preview:
+        preview = False
+        preview_drawing = False
+        preview_shape = None
+    else:
+        preview = True
+        match shape:
+            case "rect":
+                preview_shape = Rect(0,0,0,0,BLACK,False,0,0,True)
+        
 
-buttons.append(Button(200,645,"mario.jpg", draw_rect_preview))
+
+
+
+
+buttons.append(Button(150,410,"mario.jpg", tog_shape_preview, "rect"))
 
 
 
@@ -150,13 +191,13 @@ def update():
 
     WIN.fill((background))
 
-    if py.mouse.get_pressed()[0] and not draw:
+    if (py.mouse.get_pressed()[0] and not draw) and not preview:
         mouse_pos = py.mouse.get_pos()
-        if mouse_pos[1] < 640:
+        if mouse_pos[1] < 400:
             draw = True
             shapes.append(Circle(mouse_pos, brush_size / 2,BLACK))
     
-    if draw:
+    if draw and not preview:
         cur_mouse_pos = py.mouse.get_pos()
         shapes.append(Line(mouse_pos, cur_mouse_pos, BLACK, brush_size))
         shapes.append(Circle(cur_mouse_pos, brush_size / 2,BLACK))
@@ -169,13 +210,21 @@ def update():
     for shape in shapes:
         shape.draw()
     
-    py.draw.rect(WIN, WHITE, (0, 640, 1080, 80))
-    py.draw.line(WIN, BLACK, (0, 640), (1080,640))
+
+    if preview:
+        if preview_drawing: preview_shape.draw_preview()
+        preview_shape.draw()
+    
+    
+    
+    py.draw.rect(WIN, WHITE, (0, 400, 750, 100))
+    py.draw.line(WIN, BLACK, (0, 400), (750,400))
     WIN.blit(brush_size_label_text, brush_size_label_rect)
     WIN.blit(brush_size_text, brush_size_rect)
 
     for button in buttons:
-        button.check_click(py.mouse.get_pos)
+        if py.mouse.get_pressed()[0]:
+            button.check_click(py.mouse.get_pos())
         button.draw()
 
 
@@ -191,18 +240,26 @@ while run:
             if py.mouse.get_pressed()[0]:
 
                 mouse_pos = py.mouse.get_pos()
-                for button in buttons:
-                    button.check_click(mouse_pos)
+                if preview and not preview_drawing:
+                    preview_shape.draw_preview(mouse_pos)
+                    preview_drawing = True
+                elif preview and preview_drawing:
+                    preview_shape.origin = False
+                    preview_shape.drawn = True
+                    shapes.append(preview_shape)
+                    preview = False
+                    preview_drawing = False
+                    preview_shape = None
         
         if event.type == py.KEYDOWN:
             if event.key == py.K_PERIOD and brush_size < 100:
                 brush_size += 1
                 brush_size_text = sans_code.render(str(brush_size), True, BLACK)
-                brush_size_rect = brush_size_text.get_rect(center = (65,690))
+                brush_size_rect = brush_size_text.get_rect(center = (65,410))
             if event.key == py.K_COMMA and brush_size > 0:
                 brush_size -= 1
                 brush_size_text = sans_code.render(str(brush_size), True, BLACK)
-                brush_size_rect = brush_size_text.get_rect(center = (65,690))
+                brush_size_rect = brush_size_text.get_rect(center = (65,410))
                 
     
     update()
