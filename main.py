@@ -14,7 +14,7 @@ sans_code = py.font.SysFont("Verdana", 20)
 
 WHITE = (255,255,255)
 BLACK = (0, 0, 0)
-BLACK = (0, 0, 0)
+
 
 class Shape():
     
