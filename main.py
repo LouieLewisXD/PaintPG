@@ -242,7 +242,7 @@ def tog_shape_preview(shape):
 
 
 
-buttons.append(Button(150,410,"mario.jpg", tog_shape_preview, "rect"))
+buttons.append(Button(150,410,"mario.jpg", tog_shape_preview, "ellipse"))
 buttons.append(Button(300, 410, "mario.jpg", tog_shape_preview, "poly"))
 
 
