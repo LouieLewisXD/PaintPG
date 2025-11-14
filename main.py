@@ -1,5 +1,5 @@
 import pygame as py
-import sys
+import sys, math
 
 py.init()
 run = True
@@ -65,19 +65,42 @@ class Rect(Shape):
 
 
 
-class Elipse(Shape):
+class Ellipse(Shape):
 
-    def __init__(self,x,y,width,height,fill,border=0,border_color=0):
-        super().__init__(fill,border,border_color)
+    def __init__(self,x,y,width,height,fill,drawn,border=0,border_color=0, origin=False):
+        super().__init__(fill,drawn,border,border_color)
         if width == height: self.rect = py.rect.Rect(x - width / 2, y - height / 2, width, height)
         else: self.rect = self.rect = py.rect.Rect(x,y,width,height)
     
     def draw(self):
         if self.fill != None:
-            py.draw.elipse(WIN,self.fill,self.rect)
+            py.draw.ellipse(WIN,self.fill,self.rect)
         
         if self.border > 0:
-            py.draw.elipse(WIN, self.border_color, self.rect, self.border)
+            py.draw.ellipse(WIN, self.border_color, self.rect, self.border)
+    
+    def draw_preview(self, mouse_pos = None):
+        if mouse_pos is None:
+            mouse_pos = py.mouse.get_pos()
+            if mouse_pos[0] > self.origin[0]:
+                self.rect.x = self.origin[0]
+                self.rect.width = mouse_pos[0] - self.rect.x
+            else:
+                self.rect.x = mouse_pos[0]
+                self.rect.width = self.origin[0] - mouse_pos[0]
+
+            if mouse_pos[1] > self.origin[1]:
+                self.rect.y = self.origin[1]
+                self.rect.height = mouse_pos[1] - self.rect.y
+            else:
+                self.rect.y = mouse_pos[1]
+                self.rect.height = self.origin[1] - mouse_pos[1]
+
+        else:
+            self.origin = mouse_pos
+            self.rect.topleft = mouse_pos
+            self.rect.width = 5
+            self.rect.height = 5
 
 class Circle(Shape):
 
@@ -93,25 +116,46 @@ class Circle(Shape):
         
         if self.border > 0:
             py.draw.circle(WIN, self.border_color, self.pos, self.border)
+    
+    def draw_preview(self, mouse_pos = None):
+        if mouse_pos is None:
+            mouse_pos = py.mouse.get_pos()
+            self.radius = math.sqrt(math.pow(mouse_pos[0] - self.pos[0], 2) + math.pow(mouse_pos[1] - self.pos[1], 2))
+            self.rect.width = self.radius * 2
+            self.rect.height = self.radius * 2
+            
+        else:
+            self.pos = mouse_pos
+            self.rect.center = self.pos
+        
 
 class Poly(Shape):
-    def __init__(self,points,fill,border=0,border_color=0):
-        super().__init__(fill,border,border_color)
+    def __init__(self,points,fill,drawn=False,border=0,border_color=0):
+        super().__init__(fill,drawn,border,border_color)
         self.points = points
     
     def draw(self):
-        if self.fill != None:
-            py.draw.polygon(WIN, self.fill, self.points)
+        if len(self.points) > 2:
+            if self.fill != None:
+                py.draw.polygon(WIN, self.fill, self.points)
+            
+            if self.border > 0:
+                py.draw.polygon(WIN, self.border_color, self.points, self.border)
         
-        if self.border > 0:
-            py.draw.polygon(WIN, self.border_color, self.points, self.border)
+        elif len(self.points) > 1:
+            py.draw.line(WIN, self.fill, self.points[0], self.points[1])
+        
 
 
-class Arc(Shape):
-    def __init__(self,x,y,width,height,fill,border=0,thick=0):
-        super().__init__(x,y,fill,border,thick)
-        self.width = width
-        self.height = height
+    def draw_preview(self, mouse_pos = None):
+        if mouse_pos is None:
+            mouse_pos = py.mouse.get_pos()
+            self.points[-1] = mouse_pos
+        
+        else:
+            self.points.append(mouse_pos)
+            self.points.append(mouse_pos)
+        
 
 class Line(Shape):
     def __init__(self,pos1,pos2,fill,border=1,drawn=False):
@@ -121,6 +165,15 @@ class Line(Shape):
         
     def draw(self):
         py.draw.line(WIN, self.fill, self.pos1, self.pos2, self.border)
+    
+    def draw_preview(self, mouse_pos=None):
+        if mouse_pos is None:
+            mouse_pos = py.mouse.get_pos()
+            self.pos2 = mouse_pos
+        
+        else:
+            self.pos1 = mouse_pos
+            self.pos2 = mouse_pos
 
 class Button():
     def __init__(self,x,y,path,func,arg):
@@ -175,6 +228,14 @@ def tog_shape_preview(shape):
         match shape:
             case "rect":
                 preview_shape = Rect(0,0,0,0,BLACK,False,0,0,True)
+            case "ellipse":
+                preview_shape = Ellipse(0,0,0,0,BLACK,False,0,0,True)
+            case "circle":
+                preview_shape = Circle((0,0),0,BLACK,False,0,0)
+            case "line":
+                preview_shape = Line((0,0),(0,0),BLACK)
+            case "poly":
+                preview_shape = Poly([],BLACK)
         
 
 
@@ -182,7 +243,7 @@ def tog_shape_preview(shape):
 
 
 buttons.append(Button(150,410,"mario.jpg", tog_shape_preview, "rect"))
-
+buttons.append(Button(300, 410, "mario.jpg", tog_shape_preview, "poly"))
 
 
 def update():
@@ -216,7 +277,6 @@ def update():
         preview_shape.draw()
     
     
-    
     py.draw.rect(WIN, WHITE, (0, 400, 750, 100))
     py.draw.line(WIN, BLACK, (0, 400), (750,400))
     WIN.blit(brush_size_label_text, brush_size_label_rect)
@@ -244,6 +304,10 @@ while run:
                     preview_shape.draw_preview(mouse_pos)
                     preview_drawing = True
                 elif preview and preview_drawing:
+                    if type(preview_shape) is Poly:
+                        if (not (preview_shape.points[-2] == mouse_pos)):
+                            preview_shape.points.append(mouse_pos)
+                            continue
                     preview_shape.origin = False
                     preview_shape.drawn = True
                     shapes.append(preview_shape)
