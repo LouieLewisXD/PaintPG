@@ -1,5 +1,6 @@
 # Init
 import pygame as py
+import HelperGUI as GUI
 import sys, math
 
 py.init()
@@ -15,8 +16,6 @@ keys_pressed  = []
 mouse_pressed = []
 mouse_pos = ()
 clock = py.time.Clock()
-
-sans_code = py.font.SysFont("Verdana", 20)
 
 # Colors
 WHITE = (255,255,255)
@@ -70,13 +69,20 @@ class Polygon(Shape):
 
         self.points = []
 
+# All the menu declaration
+
+bottom_menu = GUI.Menu(WIN, 0, 400, [GUI.Rect(True, WHITE, 0, None, topleft=(0,0), width=750, height=100), GUI.Rect(True, BLACK, 0, None, topleft=(0,0), width = 750, height = 5)], [], [], True)
+
 # loop for all the game functions/drawing
 def update():
     WIN.fill(WHITE)
+    if bottom_menu.open:
+        bottom_menu.draw()
 
 # main game loop
 while run:
 
+    released_keys = []
     for event in py.event.get():
 
         if event.type == py.QUIT:
@@ -86,9 +92,11 @@ while run:
             keys_pressed.append(event.key)
         if event.type == py.KEYUP:
             keys_pressed.remove(event.key)
+            keys_pressed.append(event.key)
         if event.type == py.MOUSEBUTTONDOWN:
-            mouse_pressed.append(event.)            
-    print(mouse_pressed)
+            mouse_pressed = py.mouse.get_pressed()
+        if event.type == py.MOUSEBUTTONUP:
+            mouse_pressed = py.mouse.get_pressed()          
     update()
     py.display.update()
     clock.tick(60)
