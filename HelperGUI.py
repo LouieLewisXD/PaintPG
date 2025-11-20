@@ -56,7 +56,7 @@ class Menu():
     
     def draw(self):
 
-        if open:
+        if self.open:
 
             for shape in self.shapes:
                 shape.draw(self.surface)
@@ -69,6 +69,9 @@ class Menu():
             
             for text in self.texts:
                 text.draw(self.surface)
+    
+    def toggle(self):
+        self.open = not self.open
 
 '''
 CustomButton class - Used to define a button with Shape and Text objects
