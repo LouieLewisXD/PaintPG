@@ -9,7 +9,7 @@ run = True
 WIDTH, HEIGHT = 750,500
 WIN = py.display.set_mode((WIDTH, HEIGHT))
 py.display.set_caption("PaintPG")
-icon = py.image.load("pencil.png")
+icon = py.image.load("assets\pencil.png")
 py.display.set_icon(icon)
 
 keys_pressed  = []
@@ -69,12 +69,22 @@ class Polygon(Shape):
 
         self.points = []
 
+# Drawing functions
+
+
+# Drawing variables
+
+brush_size = 5
+
 # All the menu declaration
 
-bottom_menu = GUI.Menu(WIN, 0, 400, [GUI.Rect(True, WHITE, 0, None, topleft=(0,0), width=750, height=100), GUI.Rect(True, BLACK, 0, None, topleft=(0,0), width = 750, height = 5)], [], [], True)
+brush_size_text = GUI.Text("Verdana", 20, str(brush_size), BLACK, midtop=(60,45))
+shapes_image = GUI.Image()
+bottom_menu = GUI.Menu(WIN, 0, 400, [GUI.Rect(True, WHITE, 0, None, 0, 0, 750, 100), GUI.Rect(True, BLACK, 0, None, 0, 0, 750, 1)], [GUI.ImageButton(None, None, GUI.Image("assets\shapes.png", midtop=(200,20)))], [], [GUI.Text("Verdana", 20, "Brush Size:", BLACK, midtop=(60,10)), brush_size_text], True)
 
 # loop for all the game functions/drawing
 def update():
+    global brush_size
     WIN.fill(WHITE)
     if bottom_menu.open:
         bottom_menu.draw()
