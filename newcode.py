@@ -15,6 +15,8 @@ py.display.set_icon(icon)
 keys_pressed  = []
 mouse_pressed = []
 mouse_pos = ()
+released_keys = []
+released_mouse = [False,False,False]
 clock = py.time.Clock()
 
 # Colors
@@ -79,20 +81,29 @@ brush_size = 5
 # All the menu declaration
 
 brush_size_text = GUI.Text("Verdana", 20, str(brush_size), BLACK, midtop=(60,45))
-shapes_menu = GUI.Menu(WIN, 105, 0, [], [GUI.ImageButton(None, None, GUI.Image("assets\line.png", center=(50, 50)))], [], [], True)
+shapes_menu = GUI.Menu(WIN, 120, 200, [], [GUI.ImageButton(None, None, GUI.Image("assets\line.png", topleft=(0, 0))), GUI.ImageButton(None, None, GUI.Image("assets\polygon.png", topleft=(0, 50))), GUI.ImageButton(None, None, GUI.Image("assets\ellipse.png", topleft=(0, 100))), GUI.ImageButton(None, None, GUI.Image("assets\\rectangle.png", topleft=(0, 150)))], [], [], False)
 bottom_menu = GUI.Menu(WIN, 0, 400, [GUI.Rect(True, WHITE, 0, None, 0, 0, 750, 100), GUI.Rect(True, BLACK, 0, None, 0, 0, 750, 1)], [GUI.ImageButton(None, None, GUI.Image("assets\pencil.png", midleft=(5,50))), GUI.ImageButton(shapes_menu.toggle, None, GUI.Image("assets\shapes.png", midleft=(105,50))), GUI.ImageButton(None, None, GUI.Image("assets\\floppy_disk.png", midleft=(205,50)))], [], [], True)
 
 # loop for all the game functions/drawing
 def update():
-    global brush_size
+    # Functions
+    
+    if released_mouse[0]:
+        bottom_menu.check_buttons(mouse_pos)
+
+
+    # Drawing
     WIN.fill(WHITE)
     bottom_menu.draw()
     shapes_menu.draw()
 
+
 # main game loop
 while run:
 
+    # resets lists keeping track of released keys/buttons
     released_keys = []
+    released_mouse = [False,False,False]
     for event in py.event.get():
 
         if event.type == py.QUIT:
@@ -102,11 +113,18 @@ while run:
             keys_pressed.append(event.key)
         if event.type == py.KEYUP:
             keys_pressed.remove(event.key)
-            keys_pressed.append(event.key)
+            released_keys.append(event.key)
         if event.type == py.MOUSEBUTTONDOWN:
             mouse_pressed = py.mouse.get_pressed()
         if event.type == py.MOUSEBUTTONUP:
+            #checks the difference between current pressed and past pressed and adds the released mouse buttons
+            current_pressed = mouse_pressed
             mouse_pressed = py.mouse.get_pressed()          
+            for mouse_button in range(3):
+                if current_pressed[mouse_button] != mouse_pressed[mouse_button]:
+                    released_mouse[mouse_button] = True
+    
+    mouse_pos = py.mouse.get_pos()
     update()
     py.display.update()
     clock.tick(60)

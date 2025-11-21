@@ -72,6 +72,10 @@ class Menu():
     
     def toggle(self):
         self.open = not self.open
+    
+    def check_buttons(self, pos):
+        for button in self.buttons:
+            button.click(pos)
 
 '''
 CustomButton class - Used to define a button with Shape and Text objects
@@ -123,7 +127,10 @@ class CustomButton():
     
     def click(self, pos):
         if self.rect.collidepoint(pos):
-            self.func(self.args)
+            if self.args is None:
+                self.func()
+            else:
+                self.func(self.args)
 
 '''
 ImageButton class - Used to define a button with a single Image object
@@ -168,7 +175,10 @@ class ImageButton():
     
     def click(self, pos):
         if self.rect.collidepoint(pos):
-            self.func(self.args)
+            if self.args is None:
+                self.func()
+            else:
+                self.func(self.args)
 
 class Shape():
 
